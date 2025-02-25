@@ -1,22 +1,13 @@
 use std::fmt::Debug;
 
 use anyhow::Result;
-use geo::algorithm::{
-    coords_iter::CoordsIter,
-    map_coords::{MapCoords, MapCoordsInPlace},
-    convert::Convert
-};
+use geo::{algorithm::{
+    convert::Convert, coords_iter::CoordsIter
+}, MapCoordsInPlace};
 use ndarray::Array2;
 use num_traits::{Num, NumCast};
 
 use super::{MergeAlgorithm, Rasterize, Rasterizer};
-
-fn to_float<T>(coords: &(T, T)) -> (f64, f64)
-where
-    T: Into<f64> + Copy,
-{
-    (coords.0.into(), coords.1.into())
-}
 
 /// Use `gdal`'s rasterizer to rasterize some shape into a
 /// (widith, height) window of u8.

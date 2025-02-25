@@ -4,7 +4,7 @@ use std::{collections::HashSet, fmt::Debug, ops::Add};
 use euclid::{Transform2D, UnknownUnit};
 use geo::{
     algorithm::{
-        convert::Convert, coords_iter::CoordsIter, map_coords::{MapCoords, MapCoordsInPlace}
+        convert::Convert, coords_iter::CoordsIter, map_coords::MapCoordsInPlace
     }, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
 };
 use ndarray::s;
@@ -132,13 +132,6 @@ impl BinaryBuilder {
 #[derive(Clone, Debug)]
 pub struct BinaryRasterizer {
     inner: Rasterizer<u8>,
-}
-
-fn to_float<T>(coords: &(T, T)) -> (f64, f64)
-where
-    T: Into<f64> + Copy,
-{
-    (coords.0.into(), coords.1.into())
 }
 
 impl BinaryRasterizer {
