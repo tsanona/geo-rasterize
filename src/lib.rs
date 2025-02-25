@@ -4,11 +4,8 @@ use std::{collections::HashSet, fmt::Debug, ops::Add};
 use euclid::{Transform2D, UnknownUnit};
 use geo::{
     algorithm::{
-        coords_iter::CoordsIter,
-        map_coords::{MapCoords, MapCoordsInplace},
-    },
-    Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon, Rect, Triangle,
+        convert::Convert, coords_iter::CoordsIter, map_coords::{MapCoords, MapCoordsInPlace}
+    }, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
 };
 use ndarray::s;
 use ndarray::Array2;
@@ -167,8 +164,8 @@ impl BinaryRasterizer {
     /// `f64`.
     pub fn rasterize<Coord, InputShape, ShapeAsF64>(&mut self, shape: &InputShape) -> Result<()>
     where
-        InputShape: MapCoords<Coord, f64, Output = ShapeAsF64>,
-        ShapeAsF64: Rasterize<u8> + for<'a> CoordsIter<'a, Scalar = f64> + MapCoordsInplace<f64>,
+        InputShape: Convert<Coord, f64, Output = ShapeAsF64>,
+        ShapeAsF64: Rasterize<u8> + for<'a> CoordsIter<Scalar = f64> + MapCoordsInPlace<f64>,
         Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
     {
         // first, convert our input shape so that its coordinates are of type f64
@@ -479,12 +476,12 @@ where
         foreground: Label,
     ) -> Result<()>
     where
-        InputShape: MapCoords<Coord, f64, Output = ShapeAsF64>,
-        ShapeAsF64: Rasterize<Label> + for<'a> CoordsIter<'a, Scalar = f64> + MapCoordsInplace<f64>,
+        InputShape: Convert<Coord, f64, Output = ShapeAsF64>,
+        ShapeAsF64: Rasterize<Label> + for<'a> CoordsIter<Scalar = f64> + MapCoordsInPlace<f64>,
         Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
     {
         // first, convert our input shape so that its coordinates are of type f64
-        let mut float = shape.map_coords(to_float);
+        let mut float = shape.convert();
 
         // then ensure that all coordinates are finite or bail
         let all_finite = float
@@ -501,8 +498,8 @@ where
         match self.geo_to_pix {
             None => float,
             Some(transform) => {
-                float.map_coords_inplace(|&(x, y)| {
-                    transform.transform_point(EuclidPoint::new(x, y)).to_tuple()
+                float.map_coords_in_place(|geo::Coord{ x, y}| {
+                    transform.transform_point(EuclidPoint::new(x, y)).to_tuple().into()
                 });
                 float
             }
