@@ -3,7 +3,8 @@ use std::fmt::Debug;
 use anyhow::Result;
 use geo::algorithm::{
     coords_iter::CoordsIter,
-    map_coords::{MapCoords, MapCoordsInplace},
+    map_coords::{MapCoords, MapCoordsInPlace},
+    convert::Convert
 };
 use ndarray::Array2;
 use num_traits::{Num, NumCast};
@@ -26,24 +27,24 @@ pub fn gdal_rasterize<Coord, InputShape, ShapeAsF64>(
     algorithm: MergeAlgorithm,
 ) -> Result<Array2<u8>>
 where
-    InputShape: MapCoords<Coord, f64, Output = ShapeAsF64>,
+    InputShape: Convert<Coord, f64, Output = ShapeAsF64>,
     ShapeAsF64: Rasterize<u8>
-        + for<'a> CoordsIter<'a, Scalar = f64>
+        + for<'a> CoordsIter<Scalar = f64>
         + Into<geo::Geometry<f64>>
-        + MapCoordsInplace<f64>,
+        + MapCoordsInPlace<f64>,
     Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
 {
     use gdal::{
         raster::{rasterize, RasterizeOptions},
         vector::ToGdal,
-        Driver,
+        DriverManager,
     };
 
-    let driver = Driver::get("MEM")?;
+    let driver = DriverManager::get_driver_by_name("MEM")?;
     let mut ds = driver.create_with_band_type::<u8, &str>(
         "some_filename",
-        width as isize,
-        height as isize,
+        width,
+        height,
         1,
     )?;
     let options = RasterizeOptions {
@@ -57,7 +58,7 @@ where
 
     let mut gdal_shapes = Vec::new();
     for shape in shapes {
-        let float = shape.map_coords(to_float);
+        let float = shape.convert();
         let all_finite = float
             .coords_iter()
             .all(|coordinate| coordinate.x.is_finite() && coordinate.y.is_finite());
@@ -70,7 +71,8 @@ where
     let burn_values = vec![1.0; gdal_shapes.len()];
     rasterize(&mut ds, &[1], &gdal_shapes, &burn_values, Some(options))?;
     ds.rasterband(1)?
-        .read_as_array((0, 0), (width, height), (width, height), None)
+        .read_as((0, 0), (width, height), (width, height), None)?
+        .to_array()
         .map_err(|e| e.into())
 }
 
@@ -81,11 +83,11 @@ pub fn compare<Coord, InputShape, ShapeAsF64>(
     algorithm: MergeAlgorithm,
 ) -> Result<(Array2<u8>, Array2<u8>)>
 where
-    InputShape: MapCoords<Coord, f64, Output = ShapeAsF64>,
+    InputShape: Convert<Coord, f64, Output = ShapeAsF64>,
     ShapeAsF64: Rasterize<u8>
-        + for<'a> CoordsIter<'a, Scalar = f64>
+        + for<'a> CoordsIter<Scalar = f64>
         + Into<geo::Geometry<f64>>
-        + MapCoordsInplace<f64>,
+        + MapCoordsInPlace<f64>,
     Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
 {
     let mut r = Rasterizer::new(width, height, None, algorithm, 0u8);
