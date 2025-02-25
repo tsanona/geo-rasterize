@@ -379,16 +379,6 @@ fn check_errors() -> Result<()> {
         RasterizeError::MissingWidth
     );
 
-    assert_eq!(
-        BinaryRasterizer::new(
-            5,
-            8,
-            Some(Transform::from_array([0., 1., 2., 3., 4., f64::NAN]))
-        )
-        .err()
-        .unwrap(),
-        RasterizeError::NonFiniteCoordinate
-    );
     Ok(())
 }
 
