@@ -1,14 +1,11 @@
 #![doc = include_str!("../README.md")]
 use std::{collections::HashSet, fmt::Debug, ops::Add};
-
-use euclid::{Transform2D, UnknownUnit};
 use geo::{
     algorithm::{
-        convert::Convert, coords_iter::CoordsIter, map_coords::{MapCoords, MapCoordsInPlace}
-    }, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
+        convert::Convert, coords_iter::CoordsIter, map_coords::MapCoordsInPlace
+    }, AffineTransform, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
 };
-use ndarray::s;
-use ndarray::Array2;
+use ndarray::{s, Array2};
 use num_traits::{Num, NumCast};
 use thiserror::Error;
 
@@ -21,8 +18,7 @@ mod proptests;
 
 /// Affine transform that describes how to convert world-space
 /// coordinates to pixel coordinates.
-pub type Transform = Transform2D<f64, UnknownUnit, UnknownUnit>;
-type EuclidPoint = euclid::Point2D<f64, UnknownUnit>;
+pub type Transform = AffineTransform;
 
 /// Error type for this crate
 #[derive(Error, Clone, Debug, PartialEq, Eq)]
@@ -143,15 +139,7 @@ where
 
 impl BinaryRasterizer {
     pub fn new(width: usize, height: usize, geo_to_pix: Option<Transform>) -> Result<Self> {
-        let non_finite = geo_to_pix
-            .map(|geo_to_pix| geo_to_pix.to_array().iter().any(|param| !param.is_finite()))
-            .unwrap_or(false);
-        if non_finite {
-            Err(RasterizeError::NonFiniteCoordinate)
-        } else {
-            let inner = Rasterizer::new(width, height, geo_to_pix, MergeAlgorithm::Replace, 0);
-            Ok(BinaryRasterizer { inner })
-        }
+        Ok(BinaryRasterizer { inner:  Rasterizer::new(width, height, geo_to_pix, MergeAlgorithm::Replace, 0) })
     }
 
     /// Retrieve the transform.
@@ -498,8 +486,8 @@ where
         match self.geo_to_pix {
             None => float,
             Some(transform) => {
-                float.map_coords_in_place(|geo::Coord{ x, y}| {
-                    transform.transform_point(EuclidPoint::new(x, y)).to_tuple().into()
+                float.map_coords_in_place(|coord| {
+                    transform.apply(coord)
                 });
                 float
             }
