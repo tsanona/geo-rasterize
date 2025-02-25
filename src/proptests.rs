@@ -53,9 +53,9 @@ prop_compose! {
 		        radius in 0.000001..15.0) -> (Point<f64>, LineString<f64>) {
 	let angles = (0..exterior_points)
 	    .map(|idx| 2.0 * std::f64::consts::PI * (idx as f64) / (exterior_points as f64));
-	let points: Vec<geo::Coord<f64>> = angles
+	let points: Vec<Coord<f64>> = angles
 	    .map(|angle_rad| angle_rad.sin_cos())
-	    .map(|(sin, cos)| geo::Coord {
+	    .map(|(sin, cos)| Coord {
 		x: center.x() + radius * cos,
 		y: center.y() + radius * sin,
 	    })
