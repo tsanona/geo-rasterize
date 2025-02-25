@@ -1,22 +1,12 @@
 use std::fmt::Debug;
 
 use anyhow::Result;
-use geo::algorithm::{
-    coords_iter::CoordsIter,
-    map_coords::{MapCoords, MapCoordsInPlace},
-    convert::Convert
-};
+use geo::{algorithm::{
+    convert::Convert, coords_iter::CoordsIter}, AffineOps};
 use ndarray::Array2;
 use num_traits::{Num, NumCast};
 
 use super::{MergeAlgorithm, Rasterize, Rasterizer};
-
-fn to_float<T>(coords: &(T, T)) -> (f64, f64)
-where
-    T: Into<f64> + Copy,
-{
-    (coords.0.into(), coords.1.into())
-}
 
 /// Use `gdal`'s rasterizer to rasterize some shape into a
 /// (widith, height) window of u8.
@@ -31,7 +21,7 @@ where
     ShapeAsF64: Rasterize<u8>
         + for<'a> CoordsIter<Scalar = f64>
         + Into<geo::Geometry<f64>>
-        + MapCoordsInPlace<f64>,
+        + AffineOps<f64>,
     Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
 {
     use gdal::{
@@ -87,7 +77,7 @@ where
     ShapeAsF64: Rasterize<u8>
         + for<'a> CoordsIter<Scalar = f64>
         + Into<geo::Geometry<f64>>
-        + MapCoordsInPlace<f64>,
+        + AffineOps<f64>,
     Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
 {
     let mut r = Rasterizer::new(width, height, None, algorithm, 0u8);

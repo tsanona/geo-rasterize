@@ -2,8 +2,8 @@
 use std::{collections::HashSet, fmt::Debug, ops::Add};
 use geo::{
     algorithm::{
-        convert::Convert, coords_iter::CoordsIter, map_coords::MapCoordsInPlace
-    }, AffineTransform, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
+        convert::Convert, coords_iter::CoordsIter
+    }, AffineOps, AffineTransform, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
 };
 use ndarray::{s, Array2};
 use num_traits::{Num, NumCast};
@@ -130,13 +130,6 @@ pub struct BinaryRasterizer {
     inner: Rasterizer<u8>,
 }
 
-fn to_float<T>(coords: &(T, T)) -> (f64, f64)
-where
-    T: Into<f64> + Copy,
-{
-    (coords.0.into(), coords.1.into())
-}
-
 impl BinaryRasterizer {
     pub fn new(width: usize, height: usize, geo_to_pix: Option<Transform>) -> Result<Self> {
         Ok(BinaryRasterizer { inner:  Rasterizer::new(width, height, geo_to_pix, MergeAlgorithm::Replace, 0) })
@@ -153,7 +146,7 @@ impl BinaryRasterizer {
     pub fn rasterize<Coord, InputShape, ShapeAsF64>(&mut self, shape: &InputShape) -> Result<()>
     where
         InputShape: Convert<Coord, f64, Output = ShapeAsF64>,
-        ShapeAsF64: Rasterize<u8> + for<'a> CoordsIter<Scalar = f64> + MapCoordsInPlace<f64>,
+        ShapeAsF64: Rasterize<u8> + for<'a> CoordsIter<Scalar = f64> + AffineOps<f64>,
         Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
     {
         // first, convert our input shape so that its coordinates are of type f64
@@ -465,11 +458,11 @@ where
     ) -> Result<()>
     where
         InputShape: Convert<Coord, f64, Output = ShapeAsF64>,
-        ShapeAsF64: Rasterize<Label> + for<'a> CoordsIter<Scalar = f64> + MapCoordsInPlace<f64>,
+        ShapeAsF64: Rasterize<Label> + for<'a> CoordsIter<Scalar = f64> + AffineOps<f64>,
         Coord: Into<f64> + Copy + Debug + Num + NumCast + PartialOrd,
     {
         // first, convert our input shape so that its coordinates are of type f64
-        let mut float = shape.convert();
+        let float = shape.convert();
 
         // then ensure that all coordinates are finite or bail
         let all_finite = float
@@ -486,10 +479,7 @@ where
         match self.geo_to_pix {
             None => float,
             Some(transform) => {
-                float.map_coords_in_place(|coord| {
-                    transform.apply(coord)
-                });
-                float
+                float.affine_transform(&transform)
             }
         }
         .rasterize(self); // and then rasterize!

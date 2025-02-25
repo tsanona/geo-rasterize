@@ -1,6 +1,6 @@
 use crate::*;
 use anyhow::Result;
-use geo::{polygon, Coordinate};
+use geo::{polygon, Coord};
 use ndarray::array;
 use pretty_assertions::assert_eq;
 
@@ -16,6 +16,7 @@ fn point() -> Result<()> {
 
 #[test]
 fn rect() -> Result<()> {
+    //FIXME: gdal doesn't rasterize correctly!
     // let (actual, expected) = compare(6, 6, &geo::Rect::new((0, 1), (2, 3)))?;
     // assert_eq!(actual, expected);
     let (actual, expected) = compare(
@@ -224,11 +225,11 @@ fn heatmap_transform() -> Result<()> {
 #[test]
 fn bad_line() -> Result<()> {
     let line = Line {
-        start: Coordinate {
+        start: Coord {
             x: -1.984208921953521,
             y: 17.310676190851567,
         },
-        end: Coordinate {
+        end: Coord {
             x: 0.0,
             y: 17.2410885032527,
         },
@@ -241,11 +242,11 @@ fn bad_line() -> Result<()> {
 #[test]
 fn bad_rect() -> Result<()> {
     let r = Rect::new(
-        Coordinate {
+        Coord {
             x: -5.645366376556284,
             y: -8.757910782301106,
         },
-        Coordinate {
+        Coord {
             x: 5.645366376556284,
             y: 8.757910782301106,
         },
@@ -261,19 +262,19 @@ fn bad_poly() -> Result<()> {
     use geo::line_string;
     let r = Polygon::new(
         line_string![
-            Coordinate {
+            Coord {
                 x: 8.420838780938684,
                 y: 0.0,
             },
-            Coordinate {
+            Coord {
                 x: -4.21041939046934,
                 y: 7.292660305466085,
             },
-            Coordinate {
+            Coord {
                 x: -4.210419390469346,
                 y: -7.2926603054660815,
             },
-            Coordinate {
+            Coord {
                 x: 8.420838780938684,
                 y: 0.0,
             }
@@ -290,19 +291,19 @@ fn bad_poly2() -> Result<()> {
     use geo::line_string;
     let r = Polygon::new(
         line_string![
-            Coordinate {
+            Coord {
                 x: 19.88238653081379,
                 y: 0.0
             },
-            Coordinate {
+            Coord {
                 x: -0.3049020763576378,
                 y: 11.65513651155909
             },
-            Coordinate {
+            Coord {
                 x: -0.30490207635764666,
                 y: -11.655136511559085
             },
-            Coordinate {
+            Coord {
                 x: 19.88238653081379,
                 y: 0.0
             }
@@ -317,11 +318,11 @@ fn bad_poly2() -> Result<()> {
 #[test]
 fn bad_line2() -> Result<()> {
     let line = Line {
-        start: Coordinate {
+        start: Coord {
             x: 0.0,
             y: 0.995529841217325,
         },
-        end: Coordinate {
+        end: Coord {
             x: 14.345339055640835,
             y: 1.003085512751344,
         },

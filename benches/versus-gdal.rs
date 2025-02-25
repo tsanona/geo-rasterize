@@ -3,7 +3,6 @@ use std::{fs::File, io::BufReader};
 use anyhow::Result;
 use criterion::{criterion_group, criterion_main, Criterion};
 use flatgeobuf::{FallibleStreamingIterator, FgbReader};
-use geo::map_coords::MapCoordsInPlace;
 use geo::prelude::*;
 use geo::Geometry;
 use geo::Polygon;
